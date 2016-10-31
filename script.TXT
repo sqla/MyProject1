@@ -1,0 +1,54 @@
+
+%p=D:\f\23 May\M0_NB_N2\M0_NB_N2_80\2\; //DIR
+%q=090; //File name
+nf=10;  //number of files
+
+create calib -w 10000; open -w  D:\f\calib.dat;
+create temper -w 10;
+win -t Graph1 line12;
+
+
+for (kk=1;kk<=nf;kk++) 
+{
+
+nn=mm+kk-1; create temp$(kk) -w 10000;
+
+if (kk < 10 ) %r=0000000$(kk);  
+else %r=000000$(kk); 
+
+open -w %p%q_%r.dat;
+
+wks.addcol(c);wks.addcol(d);wks.addcol(e);wks.col3.type = 4;
+
+for (ii = 1; ii <= 3648; ii++) A%q%r_c[ii]= 1.4388e7/calib_a[ii];
+for (ii = 1; ii <= 3648; ii++) A%q%r_d[ii]= ln(calib_a[ii]^4*A%q%r_b[ii]/calib_b[ii]);
+
+lr  A%q%r_d -b 300 -e 1500;
+
+temper_a[kk]=lr.a;
+temper_b[kk]=abs(1/lr.b);
+
+for (ii = 300; ii <= 1500; ii++) A%q%r_e[ii]=lr.a+lr.b* A%q%r_c[ii];
+
+win -a Graph1;
+layer -s kk; layer -h 0;
+layer -i A%q%r_d ; 
+layer -i A%q%r_e ;  
+Label -xb "Wave lenght, nm"; label -yl "Factor, a.u.";  layer$(kk).factor=0.5;  layer$(kk).fixed=1;
+
+rescale;
+ layer -c;
+for (jj=1;jj<=count;jj++){ %t=%[%Z,#jj]; set %t -cl jj; set %t -w 2000; };
+%r=$(temper_b[kk],%5.0f);
+//type %r;
+label -q 2 -s \v(T=%r) ;
+
+};
+
+
+//label -q 2 -s \v(%p);
+
+label -s -px 15 15 -n  ForPrintOnly  (%p %q) ;
+
+Image.FileName$ = %p%q.jpg;
+Image.Export.PagePixel( jpg, 1280, 960, 24, 0 );
